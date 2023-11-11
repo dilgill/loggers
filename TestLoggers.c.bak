@@ -1,0 +1,50 @@
+#include "mockup_flash/flash.h"
+
+int main() {
+    // Check that all regions are on start of 256 byte boundaries
+    assert(default_flash_header.events_header.start_addr % 256 == 0);
+    assert(default_flash_header.exp1_header.start_addr % 256 == 0);
+    assert(default_flash_header.exp2_header.start_addr % 256 == 0);
+    assert(default_flash_header.exp3_header.start_addr % 256 == 0);
+    assert(default_flash_header.exp4_header.start_addr % 256 == 0);
+    assert(default_flash_header.exp5_header.start_addr % 256 == 0);
+
+    init_flash_header();
+    fetch_flash_header();
+
+    // Checking that flash header was properly initialized to default
+    assert(memcmp(&flash_header, &default_flash_header, sizeof(default_flash_header)) == 0);
+
+    uint64_t page_buff[ECC_BLOCK_SIZE/8];
+    uint32_t block_addr;
+
+    // Should return the events in the correct sequence
+    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
+    assert(get_oldest_page(page_buff, &block_addr) == EXP1);
+    assert(get_oldest_page(page_buff, &block_addr) == EXP2);
+    assert(get_oldest_page(page_buff, &block_addr) == EXP3);
+    assert(get_oldest_page(page_buff, &block_addr) == EXP4);
+    assert(get_oldest_page(page_buff, &block_addr) == EXP5);
+    // Should start over again from 
+    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
+
+    // The mock buffer should match the flash header:
+    assert(memcmp(&flash_header, mock_flash_buff, sizeof(flash_header)) == 0);
+    
+    // After calling get_oldest_page, the flash header should be different from the default
+    assert(memcmp(&flash_header, &default_flash_header, sizeof(default_flash_header)) != 0);
+
+    // The only change should be the oldest_block_addrs for each set of logs
+    struct FlashHeader new_header = default_flash_header;
+    // events header should have rolled back to start
+    // new_header.events_header.oldest_block_addr;
+    new_header.exp1_header.oldest_block_addr += ECC_BLOCK_SIZE;
+    new_header.exp2_header.oldest_block_addr += ECC_BLOCK_SIZE;
+    new_header.exp3_header.oldest_block_addr += ECC_BLOCK_SIZE;
+    new_header.exp4_header.oldest_block_addr += ECC_BLOCK_SIZE;
+    new_header.exp5_header.oldest_block_addr += ECC_BLOCK_SIZE;
+
+    // Check that the new header matches the 
+    assert(memcmp(&flash_header, &new_header, sizeof(flash_header)) == 0);
+    assert(memcmp(&new_header, mock_flash_buff, sizeof(new_header)) == 0);
+}
