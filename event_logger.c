@@ -9,34 +9,14 @@
 
 
 struct LocalEventLogs local_event_logs = {
-    .buffer_size = LOCAL_EVENT_LOG_BUFF_SIZE,
+    .buffer_size = sizeof(local_event_logs.buffer),
     .tail = 0,
-    .buffer = {0}
+    .buffer = {{0, 0, 0, 0, 0}}
 };
 
 // TODO: log overflows
 void handle_event_overflow() {
     push_event_logs_to_flash(&local_event_logs);
-}
-
-uint8_t add_event_log(
-    uint64_t event_log
-) {
-    uint64_t current_log_index = local_event_logs.tail;
-
-    local_event_logs.buffer[current_log_index] = event_log;
-    
-    current_log_index++;
-    
-    if (current_log_index >= local_event_logs.buffer_size) {
-        printf("overflow\n");
-        local_event_logs.tail = 0;
-        handle_event_overflow();
-    } else {
-        local_event_logs.tail = current_log_index;
-    }
-
-    return 0;
 }
 
 uint8_t build_and_add_event_log(
@@ -58,15 +38,23 @@ uint8_t build_and_add_event_log(
         return 1;
     }
 
-    union EventLog event_log =  {.as_struct = {
-        .rtc_datetime = rtc_datetime,
-        .current_mode = current_mode,
-        .action = action,
-        .details = details,
-        .extra = extra
-    }};
+    uint64_t current_log_index = local_event_logs.tail;
 
-    add_event_log(event_log.as_uint64);
+    local_event_logs.buffer[current_log_index].rtc_datetime = rtc_datetime,
+    local_event_logs.buffer[current_log_index].current_mode = current_mode;
+    local_event_logs.buffer[current_log_index].action = action;
+    local_event_logs.buffer[current_log_index].details = details;
+    local_event_logs.buffer[current_log_index].extra = extra;
+
+    current_log_index++;
+
+    if( current_log_index >= local_event_logs.buffer_size ) {
+        local_event_logs.tail = 0;
+        handle_event_overflow();
+
+    } else {
+        local_event_logs.tail = current_log_index;
+    }
     return 0;
 }
 

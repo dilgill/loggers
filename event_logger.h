@@ -45,30 +45,26 @@ void log_exp_buffer_overflow();
 void log_exp_overflow();
 void log_event_overflow();
 
-union EventLog {
-	struct __attribute__((packed))
-	{
-        unsigned int rtc_datetime: 22;
-        unsigned int current_mode: 4;
-        unsigned int action: 3;
-        unsigned int details: 24;
-        unsigned int extra: 11;
-    } as_struct;
-	uint64_t as_uint64;
+struct __attribute__((packed)) EventLog
+{
+    unsigned int rtc_datetime: 22;
+    unsigned int current_mode: 4;
+    unsigned int action: 3;
+    unsigned int details: 24;
+    unsigned int extra: 11;
 };
 
 #define LOCAL_EVENT_LOG_COUNT 32
-#define LOCAL_EVENT_LOG_BUFF_SIZE (LOCAL_EVENT_LOG_COUNT)
 
 struct LocalEventLogs {
     uint32_t buffer_size;
     uint32_t tail;
-    uint64_t buffer[LOCAL_EVENT_LOG_BUFF_SIZE];
+    struct EventLog buffer[LOCAL_EVENT_LOG_COUNT];
 };
 
-uint8_t get_local_event_log(uint64_t idx, struct LocalEventLogs * local_event_logs, union EventLog * const retrieved_log);
+uint8_t get_local_event_log(uint64_t idx, struct LocalEventLogs * local_event_logs, struct EventLog * const retrieved_log);
 
-uint8_t get_latest_event_log(struct LocalEventLogs * local_event_logs, union EventLog * const retrieved_log);
+uint8_t get_latest_event_log(struct LocalEventLogs * local_event_logs, struct EventLog * const retrieved_log);
 
 uint8_t add_event_log( uint64_t event_log);
 

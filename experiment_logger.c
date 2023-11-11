@@ -134,8 +134,7 @@ uint8_t build_and_add_exp_log(
     
     if ( current_log_index >= local_exp_logs.buffer_size ) {
         local_exp_logs.tail = 0;
-
-        // TODO: Can place overflow handler here. Suggestion - have a handle
+        
         handle_exp_overflow();
     } else {
         local_exp_logs.tail = current_log_index;
