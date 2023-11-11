@@ -1,9 +1,0 @@
-{
-    "makefile.launchConfigurations": [
-        {
-            "cwd": "/home/dilgill/school/clubs/SSS/misc/loggers/build",
-            "binaryPath": "/home/dilgill/school/clubs/SSS/misc/loggers/build/flash.out",
-            "binaryArgs": []
-        }
-    ]
-}
