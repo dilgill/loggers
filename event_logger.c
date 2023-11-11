@@ -9,9 +9,9 @@
 
 
 struct LocalEventLogs local_event_logs = {
-    .buffer_size = sizeof(local_event_logs.buffer),
+    .num_logs = LOCAL_EVENT_LOG_COUNT,
     .tail = 0,
-    .buffer = {{0, 0, 0, 0, 0}}
+    .logs = {{0, 0, 0, 0, 0}}
 };
 
 // TODO: log overflows
@@ -40,15 +40,15 @@ uint8_t build_and_add_event_log(
 
     uint64_t current_log_index = local_event_logs.tail;
 
-    local_event_logs.buffer[current_log_index].rtc_datetime = rtc_datetime,
-    local_event_logs.buffer[current_log_index].current_mode = current_mode;
-    local_event_logs.buffer[current_log_index].action = action;
-    local_event_logs.buffer[current_log_index].details = details;
-    local_event_logs.buffer[current_log_index].extra = extra;
+    local_event_logs.logs[current_log_index].rtc_datetime = rtc_datetime,
+    local_event_logs.logs[current_log_index].current_mode = current_mode;
+    local_event_logs.logs[current_log_index].action = action;
+    local_event_logs.logs[current_log_index].details = details;
+    local_event_logs.logs[current_log_index].extra = extra;
 
     current_log_index++;
 
-    if( current_log_index >= local_event_logs.buffer_size ) {
+    if( current_log_index >= local_event_logs.num_logs ) {
         local_event_logs.tail = 0;
         handle_event_overflow();
 

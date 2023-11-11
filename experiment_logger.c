@@ -12,9 +12,9 @@
 // Use this pointer when needed
 // swap what it points to on local log overflow
 struct LocalExpLogs local_exp_logs = {
-    .buffer_size = LOCAL_EXP_LOG_BUFFER_SIZE,
+    .num_logs = LOCAL_EXP_LOG_COUNT,
     .tail = 0,
-    .buffer = {{0, 0, 0, 0, 0, 0, 0, 0}}
+    .logs = {{0, 0, 0, 0, 0, 0, 0, 0}}
 };
 
 // static struct LocalExpLogs local_exp_logs_1 = {
@@ -121,20 +121,20 @@ uint8_t build_and_add_exp_log(
 	// TODO: Put into separate function - detect_exp_buff_overflow()
 	// Simplest is probably just pass the buffer and have it return next index to insert at?
 
-	local_exp_logs.buffer[current_log_index].rtc_time = rtc_time;
-    local_exp_logs.buffer[current_log_index].gyro_x = gyro_x;
-    local_exp_logs.buffer[current_log_index].gyro_y = gyro_y;
-    local_exp_logs.buffer[current_log_index].gyro_z = gyro_z;
-    local_exp_logs.buffer[current_log_index].dgyro_x = dgyro_x;
-    local_exp_logs.buffer[current_log_index].dgyro_y = dgyro_y;
-    local_exp_logs.buffer[current_log_index].dgyro_z = dgyro_z;
-    local_exp_logs.buffer[current_log_index].extra = extra;
+	local_exp_logs.logs[current_log_index].rtc_time = rtc_time;
+    local_exp_logs.logs[current_log_index].gyro_x = gyro_x;
+    local_exp_logs.logs[current_log_index].gyro_y = gyro_y;
+    local_exp_logs.logs[current_log_index].gyro_z = gyro_z;
+    local_exp_logs.logs[current_log_index].dgyro_x = dgyro_x;
+    local_exp_logs.logs[current_log_index].dgyro_y = dgyro_y;
+    local_exp_logs.logs[current_log_index].dgyro_z = dgyro_z;
+    local_exp_logs.logs[current_log_index].extra = extra;
 
     current_log_index++;
     
-    if ( current_log_index >= local_exp_logs.buffer_size ) {
+    if ( current_log_index >= local_exp_logs.num_logs ) {
         local_exp_logs.tail = 0;
-        
+
         handle_exp_overflow();
     } else {
         local_exp_logs.tail = current_log_index;
@@ -200,11 +200,11 @@ struct UnpackedExpLog decode(uint64_t log_0, uint64_t log_1) {
 */
 
 uint8_t get_exp_log(uint64_t addr, struct ExperimentLog * retrieved_log) {
-    if(addr > local_exp_logs.buffer_size) {
+    if(addr > local_exp_logs.num_logs) {
         // printf("idx %lu fail\n", idx);
         return -1;
     } else {
-        *retrieved_log = local_exp_logs.buffer[addr];
+        *retrieved_log = local_exp_logs.logs[addr];
         return 0;
     }
 }
@@ -245,8 +245,8 @@ int main() {
     }
 
     printf("Local Logs:\n");
-    for(uint64_t i = 0; i < local_exp_logs.buffer_size; ++i) {
-        printf("L Exp, rtc_time: %u\n", local_exp_logs.buffer[i].rtc_time);
+    for(uint64_t i = 0; i < local_exp_logs.num_logs; ++i) {
+        printf("L Exp, rtc_time: %u\n", local_exp_logs.logs[i].rtc_time);
     }
 
     uint64_t page_buff[32];

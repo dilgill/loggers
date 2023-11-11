@@ -195,24 +195,24 @@ Potential solutions:
     2. Check if size of block being transfered > remaining space in buffer and wrap around to start.
 */
 uint8_t push_event_logs_to_flash(struct LocalEventLogs * local_event_logs) {
-    memcpy(mock_flash_buff + flash_header.events_header.tail, local_event_logs->buffer, sizeof(local_event_logs->buffer));
+    memcpy(mock_flash_buff + flash_header.events_header.tail, local_event_logs->logs, sizeof(local_event_logs->logs));
     flash_header.events_header.tail = advance_addr(
         flash_header.events_header.start_addr,
         flash_header.events_header.end_addr,
         flash_header.events_header.tail,
-        sizeof(local_event_logs->buffer)
+        sizeof(local_event_logs->logs)
     );
 
     return 0;
 }
 
 uint8_t push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs, struct ExperimentLogHeader * current_exp_header) {
-    memcpy(mock_flash_buff + current_exp_header->tail, local_exp_logs->buffer, sizeof(local_exp_logs->buffer));
+    memcpy(mock_flash_buff + current_exp_header->tail, local_exp_logs->logs, sizeof(local_exp_logs->logs));
     current_exp_header->tail = advance_addr(
         current_exp_header->start_addr,
         current_exp_header->end_addr,
         current_exp_header->tail,
-        sizeof(local_exp_logs->buffer)
+        sizeof(local_exp_logs->logs)
     ); 
 
 

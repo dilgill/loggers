@@ -45,6 +45,7 @@ void log_exp_buffer_overflow();
 void log_exp_overflow();
 void log_event_overflow();
 
+// 8 Bytes Each
 struct __attribute__((packed)) EventLog
 {
     unsigned int rtc_datetime: 22;
@@ -57,9 +58,9 @@ struct __attribute__((packed)) EventLog
 #define LOCAL_EVENT_LOG_COUNT 32
 
 struct LocalEventLogs {
-    uint32_t buffer_size;
+    uint32_t num_logs;
     uint32_t tail;
-    struct EventLog buffer[LOCAL_EVENT_LOG_COUNT];
+    struct EventLog logs[LOCAL_EVENT_LOG_COUNT];
 };
 
 uint8_t get_local_event_log(uint64_t idx, struct LocalEventLogs * local_event_logs, struct EventLog * const retrieved_log);

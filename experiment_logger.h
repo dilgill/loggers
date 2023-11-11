@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#define LOCAL_EXP_LOG_BUFFER_SIZE 64
+#define LOCAL_EXP_LOG_COUNT 16
 
 // 128 bits == 16 bytes
 #pragma pack(push,1)
@@ -26,9 +26,9 @@ struct ExperimentLog
 // };
 
 struct LocalExpLogs {
-    unsigned int buffer_size;
+    unsigned int num_logs;
     unsigned int tail;
-    struct ExperimentLog buffer[LOCAL_EXP_LOG_BUFFER_SIZE];
+    struct ExperimentLog logs[LOCAL_EXP_LOG_COUNT];
 };
 
 extern struct ExperimentLogHeader * current_exp_header;
