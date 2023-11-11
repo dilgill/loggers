@@ -249,7 +249,7 @@ int main() {
         printf("L Exp, rtc_time: %u\n", local_exp_logs.logs[i].rtc_time);
     }
 
-    uint64_t page_buff[32];
+    uint8_t page_buff[256];
     uint32_t block_addr;
     enum LogType log_type = get_oldest_page(page_buff, &block_addr);
     log_type = get_oldest_page(page_buff, &block_addr);

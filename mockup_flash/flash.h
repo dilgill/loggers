@@ -101,6 +101,6 @@ void update_flash_header();
 
 // copies the oldest page from flash as `page_buff` argument
 // Returns the type of log (for ECC subsystem to inform flash driver where to write corrected page)
-enum LogType get_oldest_page(uint64_t page_buff[32], uint32_t * block_addr);
+enum LogType get_oldest_page(uint8_t page_buff[256], uint32_t * block_addr);
 
 #endif

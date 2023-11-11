@@ -1,6 +1,6 @@
+
+
 #include "flash.h"
-// #include "../experiment_logger.h"
-// #include "../event_logger.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -135,7 +135,7 @@ static void advance_oldest_exp_block(struct ExperimentLogHeader * exp_log_header
     );
 }
 
-enum LogType get_oldest_page(uint64_t page_buff[32], uint32_t * block_addr) {
+enum LogType get_oldest_page(uint8_t page_buff[ECC_BLOCK_SIZE], uint32_t * block_addr) {
     static enum LogType oldest_block_type = EVENT;
     uint32_t oldest_block_addr;
     switch(oldest_block_type) {
@@ -175,7 +175,7 @@ enum LogType get_oldest_page(uint64_t page_buff[32], uint32_t * block_addr) {
 
     update_flash_header();
 
-    memcpy(page_buff, mock_flash_buff + oldest_block_addr, sizeof(uint64_t[32]));
+    memcpy(page_buff, mock_flash_buff + oldest_block_addr, ECC_BLOCK_SIZE);
     // memcpy(page_buff, mock_flash_buff + oldest_block_addr, ECC_BLOCK_SIZE);
 
     enum LogType block_type = oldest_block_type;
