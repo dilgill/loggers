@@ -18,15 +18,6 @@
 #define EXP_LOG_2_START EXP_LOG_1_START + MOCK_EXP_LOG_BUFF_SIZE
 #define EXP_LOG_2_END EXP_LOG_2_START + MOCK_EXP_LOG_BUFF_SIZE
 
-#define EXP_LOG_3_START EXP_LOG_2_START + MOCK_EXP_LOG_BUFF_SIZE
-#define EXP_LOG_3_END EXP_LOG_3_START + MOCK_EXP_LOG_BUFF_SIZE
-
-#define EXP_LOG_4_START EXP_LOG_3_START + MOCK_EXP_LOG_BUFF_SIZE
-#define EXP_LOG_4_END EXP_LOG_4_START + MOCK_EXP_LOG_BUFF_SIZE
-
-#define EXP_LOG_5_START EXP_LOG_4_START + MOCK_EXP_LOG_BUFF_SIZE
-#define EXP_LOG_5_END EXP_LOG_5_START + MOCK_EXP_LOG_BUFF_SIZE
-
 static_assert(EVENT_LOG_START % 256 == 0, "");
 
 
@@ -56,24 +47,6 @@ const struct FlashHeader default_flash_header = {
         .end_addr = EXP_LOG_2_END,
         .tail = EXP_LOG_2_START,
         .oldest_block_addr = EXP_LOG_2_START
-    },
-    .exp3_header = {
-        .start_addr = EXP_LOG_3_START,
-        .end_addr = EXP_LOG_3_END,
-        .tail = EXP_LOG_3_START,
-        .oldest_block_addr = EXP_LOG_3_START
-    },
-    .exp4_header = {
-        .start_addr = EXP_LOG_4_START,
-        .end_addr = EXP_LOG_4_END,
-        .tail = EXP_LOG_4_START,
-        .oldest_block_addr = EXP_LOG_4_START
-    },
-    .exp5_header = {
-        .start_addr = EXP_LOG_5_START,
-        .end_addr = EXP_LOG_5_END,
-        .tail = EXP_LOG_5_START,
-        .oldest_block_addr = EXP_LOG_5_START
     },
     .current_exp_num = 1
 };
@@ -154,23 +127,6 @@ enum LogType get_oldest_page(uint8_t page_buff[ECC_BLOCK_SIZE], uint32_t * block
             oldest_block_addr = flash_header.exp2_header.oldest_block_addr;
             advance_oldest_exp_block(&flash_header.exp2_header);
         } break;
-
-        case EXP3: {
-            oldest_block_addr = flash_header.exp3_header.oldest_block_addr;
-            advance_oldest_exp_block(&flash_header.exp3_header);
-
-        } break;
-
-        case EXP4: {
-            oldest_block_addr = flash_header.exp4_header.oldest_block_addr;
-            advance_oldest_exp_block(&flash_header.exp4_header);
-
-        } break;
-
-        case EXP5: {
-            oldest_block_addr = flash_header.exp5_header.oldest_block_addr;
-            advance_oldest_exp_block(&flash_header.exp5_header);
-        } break;
     }
 
     update_flash_header();
@@ -181,7 +137,7 @@ enum LogType get_oldest_page(uint8_t page_buff[ECC_BLOCK_SIZE], uint32_t * block
     enum LogType block_type = oldest_block_type;
 
     oldest_block_type++;
-    if(oldest_block_type > EXP5) oldest_block_type = EVENT;
+    if(oldest_block_type > EXP2) oldest_block_type = EVENT;
 
     *block_addr = oldest_block_addr;
     return block_type;
@@ -215,9 +171,12 @@ uint8_t push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs, struct Expe
         sizeof(local_exp_logs->logs)
     ); 
 
-
     return 0;
 }
+
+// void update_TLE_backup(uint16_t TLE_backup) {
+
+// }
 
 void print_exp(uint8_t exp_log[sizeof(struct ExperimentLog)]) {
     struct ExperimentLog exp;
@@ -235,15 +194,16 @@ void print_exp(uint8_t exp_log[sizeof(struct ExperimentLog)]) {
     );
 }
 
-/*
+uint16_t get_TLE_backup() {
+    return flash_header.backup_tle_addr;
+}
+
+
 int main() {
     // Check that all regions are on start of 256 byte boundaries
     assert(default_flash_header.events_header.start_addr % 256 == 0);
     assert(default_flash_header.exp1_header.start_addr % 256 == 0);
     assert(default_flash_header.exp2_header.start_addr % 256 == 0);
-    assert(default_flash_header.exp3_header.start_addr % 256 == 0);
-    assert(default_flash_header.exp4_header.start_addr % 256 == 0);
-    assert(default_flash_header.exp5_header.start_addr % 256 == 0);
 
     init_flash_header();
     fetch_flash_header();
@@ -251,17 +211,15 @@ int main() {
     // Checking that flash header was properly initialized to default
     assert(memcmp(&flash_header, &default_flash_header, sizeof(default_flash_header)) == 0);
 
-    uint64_t page_buff[ECC_BLOCK_SIZE/8];
+    uint8_t page_buff[256];
     uint32_t block_addr;
 
     // Should return the events in the correct sequence
     assert(get_oldest_page(page_buff, &block_addr) == EVENT);
     assert(get_oldest_page(page_buff, &block_addr) == EXP1);
     assert(get_oldest_page(page_buff, &block_addr) == EXP2);
-    assert(get_oldest_page(page_buff, &block_addr) == EXP3);
-    assert(get_oldest_page(page_buff, &block_addr) == EXP4);
-    assert(get_oldest_page(page_buff, &block_addr) == EXP5);
     // Should start over again from 
+    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
     assert(get_oldest_page(page_buff, &block_addr) == EVENT);
 
     // The mock buffer should match the flash header:
@@ -276,12 +234,8 @@ int main() {
     // new_header.events_header.oldest_block_addr;
     new_header.exp1_header.oldest_block_addr += ECC_BLOCK_SIZE;
     new_header.exp2_header.oldest_block_addr += ECC_BLOCK_SIZE;
-    new_header.exp3_header.oldest_block_addr += ECC_BLOCK_SIZE;
-    new_header.exp4_header.oldest_block_addr += ECC_BLOCK_SIZE;
-    new_header.exp5_header.oldest_block_addr += ECC_BLOCK_SIZE;
 
     // Check that the new header matches the 
     assert(memcmp(&flash_header, &new_header, sizeof(flash_header)) == 0);
     assert(memcmp(&new_header, mock_flash_buff, sizeof(new_header)) == 0);
 }
-*/

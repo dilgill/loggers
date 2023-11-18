@@ -50,18 +50,6 @@ void start_exp_logging() {
             current_exp_header = &flash_header.exp2_header;
             break;
         }
-        case 3: {
-            current_exp_header = &flash_header.exp3_header;
-            break;
-        }
-        case 4: {
-            current_exp_header = &flash_header.exp4_header;
-            break;
-        }
-        case 5: {
-            current_exp_header = &flash_header.exp5_header;
-            break;
-        }
     }
 }
 
@@ -214,6 +202,7 @@ int detect_exp_buff_overflow();
 void handle_exp_buff_overflow();
 
 // Some testing of overflows and such
+/*
 int main() {
 
      // Start Logging Experiment
@@ -265,4 +254,4 @@ int main() {
 
     return 0;
 }
-
+*/

@@ -46,12 +46,9 @@ struct FlashHeader
   struct EventLogHeader events_header;
   struct ExperimentLogHeader exp1_header;
   struct ExperimentLogHeader exp2_header;
-  struct ExperimentLogHeader exp3_header;
-  struct ExperimentLogHeader exp4_header;
-  struct ExperimentLogHeader exp5_header;
   uint8_t current_exp_num: 8;
   uint32_t backup_tle_addr: 24;
-  uint8_t extra[155];
+  uint8_t extra[206];
 };
 #pragma pack(pop)
 
@@ -88,10 +85,7 @@ enum LogType
 {
   EVENT = 0,
   EXP1 = 1,
-  EXP2 = 2,
-  EXP3 = 3,
-  EXP4 = 4,
-  EXP5 = 5
+  EXP2 = 2
 };
 
 
