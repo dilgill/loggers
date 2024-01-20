@@ -16,7 +16,7 @@ struct LocalEventLogs local_event_logs = {
 
 // TODO: log overflows
 void handle_event_overflow() {
-    push_event_logs_to_flash(&local_event_logs);
+    FLASH_push_event_logs_to_flash(&local_event_logs);
 }
 
 uint8_t build_and_add_event_log(

@@ -55,7 +55,7 @@ struct FlashHeader
 // EVENT LOGS
 // Copies event logs in bulk from local storage to mock flash
 // "empties" local buffer by setting the tail of of the local logs struct to 0
-uint8_t push_event_logs_to_flash(struct LocalEventLogs * local_event_logs);
+uint8_t FLASH_push_event_logs_to_flash(struct LocalEventLogs * local_event_logs);
 
 // #define MOCK_EVENT_LOG_BUFFER_SIZE 468750
 #define MOCK_EVENT_LOG_COUNT 64
@@ -63,7 +63,7 @@ uint8_t push_event_logs_to_flash(struct LocalEventLogs * local_event_logs);
 
 // Copies exp logs in bulk from local storage to mock flash
 // "empties" local buffer by setting tail to 0
-uint8_t push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs,  struct ExperimentLogHeader * exp_header);
+uint8_t FLASH_push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs,  struct ExperimentLogHeader * exp_header);
 
 // #define MOCK_EXPERIMENT_LOG_BUFFER_SIZE 78125
 #define MOCK_EXP_LOG_COUNT 64
@@ -74,12 +74,12 @@ extern struct FlashHeader flash_header;
 // Copies flash header data from mock flash to flash header struct
 // Can be used on startups after the first one, or perhaps for ECC tasks
 // void get_flash_header(struct FlashHeader * out);
-void fetch_flash_header();
+void FLASH_fetch_header();
 
 
 // Initialize header in flash with some default values. 
 // Useful for setting up the flash for the first time.
-void init_flash_header();
+void FLASH_init_header();
 
 enum LogType
 {
@@ -90,11 +90,11 @@ enum LogType
 
 
 // Updates the header in mock flash by copying struct to header 
-void update_flash_header();
+void FLASH_update_header();
 
 
 // copies the oldest page from flash as `page_buff` argument
 // Returns the type of log (for ECC subsystem to inform flash driver where to write corrected page)
-enum LogType get_oldest_page(uint8_t page_buff[256], uint32_t * block_addr);
+enum LogType FLASH_get_oldest_page(uint8_t page_buff[256]);
 
 #endif

@@ -1,50 +1,48 @@
 
 
-#include "flash.h"
+#include "flash_using_driver.h"
+#include "flash_driver.h"
 
 #include <stdint.h>
 #include <string.h>
 #include <assert.h>
 #include <stddef.h>
 
-#define MOCK_EVENT_LOG_BUFF_SIZE (MOCK_EVENT_LOG_COUNT * 8)
-#define MOCK_EXP_LOG_BUFF_SIZE (MOCK_EXP_LOG_COUNT * 8)
+#define MOCK_EVENT_LOG_PAGES 2
+#define MOCK_EXP_LOG_PAGES 2
 
-#define EVENT_LOG_START sizeof(struct FlashHeader)
+#define EVENT_LOG_START 1
 
-#define EXP_LOG_1_START EVENT_LOG_START + MOCK_EVENT_LOG_BUFF_SIZE
-#define EXP_LOG_1_END EXP_LOG_1_START + MOCK_EXP_LOG_BUFF_SIZE
+#define EXP_LOG_1_START EVENT_LOG_START + MOCK_EVENT_LOG_PAGES
+#define EXP_LOG_1_END EXP_LOG_1_START + MOCK_EXP_LOG_PAGES
 
-#define EXP_LOG_2_START EXP_LOG_1_START + MOCK_EXP_LOG_BUFF_SIZE
-#define EXP_LOG_2_END EXP_LOG_2_START + MOCK_EXP_LOG_BUFF_SIZE
-
-static_assert(EVENT_LOG_START % 256 == 0, "");
-
+#define EXP_LOG_2_START EXP_LOG_1_START + MOCK_EXP_LOG_PAGES
+#define EXP_LOG_2_END EXP_LOG_2_START + MOCK_EXP_LOG_PAGES
 
 // How many bytes in a single block when retrieved for ECC
 // Currently assumes one block for ECC = one page of FLASH
 #define ECC_BLOCK_SIZE 256
 
 // A global variable to be used as our mock flash
-uint8_t mock_flash_buff[sizeof(struct FlashHeader) + (MOCK_EVENT_LOG_BUFF_SIZE) + (MOCK_EXP_LOG_BUFF_SIZE * 5)];
+// uint8_t mock_flash_buff[sizeof(struct FlashHeader) + (MOCK_EVENT_LOG_PAGES) + (MOCK_EXP_LOG_PAGES * 5)];
 
 // A global struct representing our flash header
 const struct FlashHeader default_flash_header = {
     .events_header = {
-        .start_addr = EVENT_LOG_START,
-        .end_addr = EVENT_LOG_START + MOCK_EVENT_LOG_BUFF_SIZE,
+        .start_page_num = EVENT_LOG_START,
+        .end_page_num = EVENT_LOG_START + MOCK_EVENT_LOG_PAGES,
         .tail = EVENT_LOG_START,
-        .oldest_block_addr = EVENT_LOG_START
+        .oldest_page_num = EVENT_LOG_START
     },
     .exp1_header = {
-        .start_addr = EXP_LOG_1_START,
-        .end_page = EXP_LOG_1_END,
+        .start_page_num = EXP_LOG_1_START,
+        .end_page_num = EXP_LOG_1_END,
         .tail = EXP_LOG_1_START,
         .oldest_page_num = EXP_LOG_1_START
     },
     .exp2_header = {
-        .start_addr = EXP_LOG_2_START,
-        .end_page = EXP_LOG_2_END,
+        .start_page_num = EXP_LOG_2_START,
+        .end_page_num = EXP_LOG_2_END,
         .tail = EXP_LOG_2_START,
         .oldest_page_num = EXP_LOG_2_START
     },
@@ -53,9 +51,10 @@ const struct FlashHeader default_flash_header = {
 
 struct FlashHeader flash_header;
 
-void init_flash_header() {
-    memcpy(mock_flash_buff, &default_flash_header, sizeof(default_flash_header));
+void FLASH_init_header() {
+    FLASH_page_program((uint8_t*) &default_flash_header, 256, 0);
     memcpy(&flash_header, &default_flash_header, sizeof(default_flash_header));
+
 }
 
 // TODO: could write these to match flash interface by just writing two:
@@ -72,12 +71,14 @@ void init_flash_header() {
 
 // void read_from_flash(void * buff, uint32_t size);
 
-void fetch_flash_header() {
-    memcpy(&flash_header, mock_flash_buff, sizeof(struct FlashHeader));
+void FLASH_fetch_header() {
+    // memcpy(&flash_header, mock_flash_buff, sizeof(struct FlashHeader));
+    FLASH_read_page((uint8_t*) &flash_header, 256, 0);
 }
 
-void update_flash_header() {
-    memcpy(mock_flash_buff, &flash_header, sizeof(struct FlashHeader));
+void FLASH_update_header() {
+    // memcpy(mock_flash_buff, &flash_header, sizeof(struct FlashHeader));
+    FLASH_page_program((uint8_t*) &flash_header, 256, 0);
 }
 
 static uint32_t advance_addr(
@@ -95,7 +96,7 @@ static void advance_oldest_event_block() {
         flash_header.events_header.start_page_num,
         flash_header.events_header.end_page_num,
         flash_header.events_header.oldest_page_num,
-        ECC_BLOCK_SIZE
+        1
     );
 }
 
@@ -104,42 +105,41 @@ static void advance_oldest_exp_block(struct ExperimentLogHeader * exp_log_header
         exp_log_header->start_page_num,
         exp_log_header->end_page_num,
         exp_log_header->oldest_page_num,
-        ECC_BLOCK_SIZE
+        1
     );
 }
 
-enum LogType get_oldest_page(uint8_t page_buff[ECC_BLOCK_SIZE], uint32_t * block_addr) {
+enum LogType FLASH_get_oldest_page(uint8_t page_buff[ECC_BLOCK_SIZE]) {
     static enum LogType oldest_block_type = EVENT;
-    uint32_t oldest_block_addr;
+    uint32_t oldest_page_num;
     switch(oldest_block_type) {
         case EVENT: {
-            oldest_block_addr = flash_header.events_header.oldest_page_num;
+            oldest_page_num = flash_header.events_header.oldest_page_num;
             advance_oldest_event_block();
         } break;
 
         case EXP1: {
-            oldest_block_addr = flash_header.exp1_header.oldest_page_num;
+            oldest_page_num = flash_header.exp1_header.oldest_page_num;
             advance_oldest_exp_block(&flash_header.exp1_header);
 
         } break;
 
         case EXP2: {
-            oldest_block_addr = flash_header.exp2_header.oldest_page_num;
+            oldest_page_num = flash_header.exp2_header.oldest_page_num;
             advance_oldest_exp_block(&flash_header.exp2_header);
         } break;
     }
 
-    update_flash_header();
+    FLASH_update_header();
 
-    memcpy(page_buff, mock_flash_buff + oldest_block_addr, ECC_BLOCK_SIZE);
-    // memcpy(page_buff, mock_flash_buff + oldest_block_addr, ECC_BLOCK_SIZE);
+    // memcpy(page_buff, mock_flash_buff + oldest_page_num, ECC_BLOCK_SIZE);
+    FLASH_read_page(page_buff, 256, oldest_page_num);
 
     enum LogType block_type = oldest_block_type;
 
     oldest_block_type++;
     if(oldest_block_type > EXP2) oldest_block_type = EVENT;
 
-    *block_addr = oldest_block_addr;
     return block_type;
 }
 
@@ -150,8 +150,8 @@ Potential solutions:
     1. Make the size of block a multiple of local buffer size, and only transfer when local buffer is full
     2. Check if size of block being transfered > remaining space in buffer and wrap around to start.
 */
-uint8_t push_event_logs_to_flash(struct LocalEventLogs * local_event_logs) {
-    memcpy(mock_flash_buff + flash_header.events_header.tail, local_event_logs->logs, sizeof(local_event_logs->logs));
+uint8_t FLASH_push_event_logs_to_flash(struct LocalEventLogs * local_event_logs) {
+    // memcpy(mock_flash_buff + flash_header.events_header.tail, local_event_logs->logs, sizeof(local_event_logs->logs));
     flash_header.events_header.tail = advance_addr(
         flash_header.events_header.start_page_num,
         flash_header.events_header.end_page_num,
@@ -162,13 +162,15 @@ uint8_t push_event_logs_to_flash(struct LocalEventLogs * local_event_logs) {
     return 0;
 }
 
-uint8_t push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs, struct ExperimentLogHeader * current_exp_header) {
-    memcpy(mock_flash_buff + current_exp_header->tail, local_exp_logs->logs, sizeof(local_exp_logs->logs));
+uint8_t FLASH_push_exp_logs_to_flash(struct LocalExpLogs * local_exp_logs, struct ExperimentLogHeader * current_exp_header) {
+    // memcpy(mock_flash_buff + current_exp_header->tail, local_exp_logs->logs, sizeof(local_exp_logs->logs));
+    FLASH_page_program((uint8_t*) local_exp_logs->logs, 256, current_exp_header->tail);
+    printf("Pushed exp logs to page: %d", current_exp_header->tail);
     current_exp_header->tail = advance_addr(
         current_exp_header->start_page_num,
         current_exp_header->end_page_num,
         current_exp_header->tail,
-        sizeof(local_exp_logs->logs)
+        1
     ); 
 
     return 0;
@@ -198,32 +200,33 @@ uint16_t get_TLE_backup() {
     return flash_header.backup_tle_addr;
 }
 
-
+/*
 int main() {
-    // Check that all regions are on start of 256 byte boundaries
-    assert(default_flash_header.events_header.start_page_num % 256 == 0);
-    assert(default_flash_header.exp1_header.start_page_num % 256 == 0);
-    assert(default_flash_header.exp2_header.start_page_num % 256 == 0);
+    // // Check that all regions are on start of 256 byte boundaries
+    // assert(default_flash_header.events_header.start_page_num % 256 == 0);
+    // assert(default_flash_header.exp1_header.start_page_num % 256 == 0);
+    // assert(default_flash_header.exp2_header.start_page_num % 256 == 0);
 
-    init_flash_header();
-    fetch_flash_header();
+    FLASH_init_header();
+    FLASH_fetch_header();
 
     // Checking that flash header was properly initialized to default
     assert(memcmp(&flash_header, &default_flash_header, sizeof(default_flash_header)) == 0);
 
     uint8_t page_buff[256];
-    uint32_t block_addr;
+
+    log_exp_overflow();
 
     // Should return the events in the correct sequence
-    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
-    assert(get_oldest_page(page_buff, &block_addr) == EXP1);
-    assert(get_oldest_page(page_buff, &block_addr) == EXP2);
+    assert(FLASH_get_oldest_page(page_buff) == EVENT);
+    assert(FLASH_get_oldest_page(page_buff) == EXP1);
+    assert(FLASH_get_oldest_page(page_buff) == EXP2);
     // Should start over again from 
-    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
-    assert(get_oldest_page(page_buff, &block_addr) == EVENT);
+    assert(FLASH_get_oldest_page(page_buff) == EVENT);
+    assert(FLASH_get_oldest_page(page_buff) == EXP1);
 
     // The mock buffer should match the flash header:
-    assert(memcmp(&flash_header, mock_flash_buff, sizeof(flash_header)) == 0);
+    // assert(memcmp(&flash_header, mock_flash_buff, sizeof(flash_header)) == 0);
     
     // After calling get_oldest_page, the flash header should be different from the default
     assert(memcmp(&flash_header, &default_flash_header, sizeof(default_flash_header)) != 0);
@@ -232,10 +235,10 @@ int main() {
     struct FlashHeader new_header = default_flash_header;
     // events header should have rolled back to start
     // new_header.events_header.oldest_block_addr;
-    new_header.exp1_header.oldest_page_num += ECC_BLOCK_SIZE;
-    new_header.exp2_header.oldest_page_num += ECC_BLOCK_SIZE;
+    new_header.exp2_header.oldest_page_num += 1;
 
     // Check that the new header matches the 
     assert(memcmp(&flash_header, &new_header, sizeof(flash_header)) == 0);
-    assert(memcmp(&new_header, mock_flash_buff, sizeof(new_header)) == 0);
+    // assert(memcmp(&new_header, mock_flash_buff, sizeof(new_header)) == 0);
 }
+*/

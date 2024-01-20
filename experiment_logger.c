@@ -1,9 +1,12 @@
 #include "experiment_logger.h"
-#include "mockup_flash/flash.h"
+#include "mockup_flash/flash_using_driver.h"
 #include "fits_in_bits.h"
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdbool.h>
+#include <string.h>
+#include <assert.h>
 
 // Small buffer that represents log storage on the MCU
 // #define LOCAL_EXP_LOG_BUFFER_SIZE (2 * 32)
@@ -64,12 +67,13 @@ void stop_exp_logging(int experiment_status) {
     }
     
     flash_header.current_exp_num = current_exp;
-    update_flash_header();
+    FLASH_update_header();
 }
 
 // TODO: swap out the local buffer used for local logging on overflow
 void handle_exp_overflow() {
-    push_exp_logs_to_flash(&local_exp_logs, current_exp_header);
+    printf("moving exp logs\n");
+    FLASH_push_exp_logs_to_flash(&local_exp_logs, current_exp_header);
 
     // Hypothetically, may want to have two sets local logs.
     // One is actively logged to, other won is copied over to flash (by DMA)
@@ -202,7 +206,6 @@ int detect_exp_buff_overflow();
 void handle_exp_buff_overflow();
 
 // Some testing of overflows and such
-/*
 int main() {
 
      // Start Logging Experiment
@@ -219,18 +222,20 @@ int main() {
 
 	// get_flash_header(&flash_header);
 
-    init_flash_header();
-    fetch_flash_header();
+    bool first_time_running = true;
 
+    if(first_time_running) {
+        FLASH_init_header();
+        first_time_running = true;
+    } else {
+        FLASH_fetch_header();
+    }
+    
     start_exp_logging();
 
     // unsigned int curr_idx = 0;
-    for (int i = 0; i < 128; ++i) {
+    for (int i = 0; i < 112; ++i) {
         build_and_add_exp_log(i, i, i, i, i, i, i, i);
-        // if (local_exp_logs.tail == 0) {
-        //     printf("Moving from local to flash\n");
-        //     push_exp_logs_to_flash(&local_exp_logs, current_exp_header);
-        // }
     }
 
     printf("Local Logs:\n");
@@ -239,19 +244,18 @@ int main() {
     }
 
     uint8_t page_buff[256];
-    uint32_t block_addr;
-    enum LogType log_type = get_oldest_page(page_buff, &block_addr);
-    log_type = get_oldest_page(page_buff, &block_addr);
+    enum LogType log_type = FLASH_get_oldest_page(page_buff);
+    log_type = FLASH_get_oldest_page(page_buff);
 
     if(log_type == EXP1) {
         printf("oldest page is experiment 1\n");
         struct ExperimentLog* exp_logs = (struct ExperimentLog* ) page_buff;
 
         for(int i = 0; i < 16; ++i) {
-            printf("exp lof rtc: %d\n", exp_logs[i].rtc_time);
+            printf("exp log rtc: %d\n", exp_logs[i].rtc_time);
+            assert(memcmp(&exp_logs[i], &local_exp_logs.logs[i], 16) == 0);
         }
     }
 
     return 0;
 }
-*/
