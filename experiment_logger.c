@@ -37,16 +37,16 @@ struct ExperimentLogHeader * current_exp_header;
 void start_exp_logging() {
     int current_exp = flash_header.current_exp_num;
 
-    if(current_exp > 5) {
-        current_exp = 1;
+    if(current_exp > EXP2) {
+        current_exp = EXP1;
     }
 
     switch(current_exp) {
-        case 1: {
+        case EXP1: {
             current_exp_header = &flash_header.exp1_header;
             break;
         }
-        case 2: {
+        case EXP2: {
             current_exp_header = &flash_header.exp2_header;
             break;
         }
@@ -59,7 +59,7 @@ void stop_exp_logging(int experiment_status) {
     current_exp_header->exit_status = experiment_status;
     int current_exp = flash_header.current_exp_num + 1;
 
-    if(current_exp > 5) {
+    if(current_exp > EXP2) {
         current_exp = 1;
     }
     

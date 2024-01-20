@@ -23,32 +23,32 @@ struct FlashLogRegion {
 
 struct EventLogHeader
 {
-  uint32_t start_addr: 24;
-  uint32_t end_addr: 24;
-  uint32_t tail: 24;
-  uint32_t oldest_block_addr: 24;
+    uint32_t start_addr: 24;
+    uint32_t end_addr: 24;
+    uint32_t tail: 24;
+    uint32_t oldest_block_addr: 24;
 };
 
 struct ExperimentLogHeader
 {
-  uint32_t start_addr: 24;
-  uint32_t end_addr: 24;
-  uint32_t tail: 24;
-  uint32_t oldest_block_addr: 24;
+    uint32_t start_addr: 24;
+    uint32_t end_addr: 24;
+    uint32_t tail: 24;
+    uint32_t oldest_block_addr: 24;
 
-  uint32_t start_datetime: 22;
-  uint8_t exit_status: 4;
-  uint16_t extra: 14;
+    uint32_t start_datetime: 22;
+    uint8_t exit_status: 4;
+    uint16_t extra: 14;
 };
 
 struct FlashHeader
 {
-  struct EventLogHeader events_header;
-  struct ExperimentLogHeader exp1_header;
-  struct ExperimentLogHeader exp2_header;
-  uint8_t current_exp_num: 8;
-  uint32_t backup_tle_addr: 24;
-  uint8_t extra[206];
+    struct EventLogHeader events_header;
+    struct ExperimentLogHeader exp1_header;
+    struct ExperimentLogHeader exp2_header;
+    uint8_t current_exp_num: 8;
+    uint32_t backup_tle_addr: 24;
+    uint8_t extra[206];
 };
 #pragma pack(pop)
 
