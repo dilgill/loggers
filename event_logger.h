@@ -63,9 +63,6 @@ struct LocalEventLogs {
     struct EventLog logs[LOCAL_EVENT_LOG_COUNT];
 };
 
-uint8_t get_local_event_log(uint64_t idx, struct LocalEventLogs * local_event_logs, struct EventLog * const retrieved_log);
-
-uint8_t get_latest_event_log(struct LocalEventLogs * local_event_logs, struct EventLog * const retrieved_log);
 
 uint8_t add_event_log( uint64_t event_log);
 

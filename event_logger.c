@@ -1,12 +1,11 @@
 #include "event_logger.h"
-#include "mockup_flash/flash.h"
+#include "mockup_flash/flash_using_driver.h"
 #include "fits_in_bits.h"
 
 #include <stdio.h>
 #include <stdint.h>
 #include <assert.h>
 #include <string.h>
-
 
 struct LocalEventLogs local_event_logs = {
     .num_logs = LOCAL_EVENT_LOG_COUNT,

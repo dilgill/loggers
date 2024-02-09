@@ -55,7 +55,7 @@ struct FlashHeader
 // EVENT LOGS
 // Copies event logs in bulk from local storage to mock flash
 // "empties" local buffer by setting the tail of of the local logs struct to 0
-uint8_t FLASH_push_event_logs_to_flash(struct LocalEventLogs * local_event_logs);
+uint8_t FLASH_push_event_logs_to_flash(/*struct LocalEventLogs * local_event_logs*/);
 
 // #define MOCK_EVENT_LOG_BUFFER_SIZE 468750
 #define MOCK_EVENT_LOG_COUNT 64
